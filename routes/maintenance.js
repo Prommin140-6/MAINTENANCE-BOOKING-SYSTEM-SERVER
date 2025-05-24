@@ -44,7 +44,7 @@ router.get('/booked-dates', async (req, res) => {
     const fullDates = await Maintenance.aggregate([
       {
         $match: {
-          status: { $in: ['pending', 'accepted'] }, // เฉพาะสถานะ pending และ accepted
+          status: { $in: ['pending', 'accepted'] },
         },
       },
       {
@@ -54,7 +54,7 @@ router.get('/booked-dates', async (req, res) => {
         },
       },
       {
-        $match: { count: { $gte: 1 } }, // เปลี่ยนจาก $gt: 1 เป็น $gte: 1 เพื่อให้วันที่ที่มี 1 คำขอขึ้นไปนับเป็นเต็ม
+        $match: { count: { $gte: 1 } },
       },
       {
         $project: { _id: 1 },
@@ -84,6 +84,20 @@ router.get('/summary', auth, async (req, res) => {
     ]);
 
     res.json({ todayRequests, pendingRequests, statusBreakdown });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ตรวจสอบสถานะคำขอตามเบอร์โทร
+router.post('/check-status', async (req, res) => {
+  try {
+    const { phone } = req.body;
+    if (!phone) {
+      return res.status(400).json({ message: 'กรุณาระบุเบอร์โทร' });
+    }
+    const requests = await Maintenance.find({ phone }).sort({ createdAt: -1 });
+    res.json(requests);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
